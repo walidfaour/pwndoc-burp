@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Implementation-Title: PwnDoc BurpSuite Extension
+Implementation-Version: 1.0.0
+Implementation-Vendor: Walid Faour
+
