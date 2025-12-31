@@ -24,7 +24,7 @@ public class PwnDocExtension implements BurpExtension {
     // ISSUE #1 FIX: Shortened extension name for cleaner context menu path
     // Menu will now be: Extensions → PwnDoc → (actions)
     public static final String EXTENSION_NAME = "PwnDoc";
-    public static final String VERSION = "1.0.1";
+    public static final String VERSION = "1.0.2";
     
     private MontoyaApi api;
     private Logging logging;
