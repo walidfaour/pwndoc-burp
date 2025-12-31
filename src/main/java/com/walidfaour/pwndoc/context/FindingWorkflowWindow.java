@@ -313,6 +313,8 @@ public class FindingWorkflowWindow extends JFrame {
     /**
      * Update Finding panel with SINGLE scroll pane for entire content.
      */
+    private static final int FINDING_ID_COLUMN = 4;
+
     private JPanel createUpdateFindingPanel() {
         JPanel outerPanel = new JPanel(new BorderLayout(10, 10));
         
@@ -327,13 +329,17 @@ public class FindingWorkflowWindow extends JFrame {
         listSection.setAlignmentX(Component.LEFT_ALIGNMENT);
         listSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, 250));
         
-        String[] columns = {"Title", "Category", "Type", "Severity"};
+        String[] columns = {"Title", "Category", "Type", "Severity", "ID"};
         updateFindingsModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
         updateFindingsTable = new JTable(updateFindingsModel);
         updateFindingsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        // Hide ID column (used for reliable selection)
+        updateFindingsTable.getColumnModel().getColumn(FINDING_ID_COLUMN).setMinWidth(0);
+        updateFindingsTable.getColumnModel().getColumn(FINDING_ID_COLUMN).setMaxWidth(0);
+        updateFindingsTable.getColumnModel().getColumn(FINDING_ID_COLUMN).setPreferredWidth(0);
         
         JScrollPane tableScroll = new JScrollPane(updateFindingsTable);
         tableScroll.setPreferredSize(new Dimension(600, 180));
@@ -359,17 +365,13 @@ public class FindingWorkflowWindow extends JFrame {
             int viewRow = updateFindingsTable.getSelectedRow();
             if (viewRow >= 0) {
                 int modelRow = updateFindingsTable.convertRowIndexToModel(viewRow);
-                if (loadedFindings != null && modelRow < loadedFindings.size()) {
-                    JsonObject finding = loadedFindings.get(modelRow).getAsJsonObject();
-                    String selectedFindingId = getJsonString(finding, "_id");
-                    if (selectedFindingId != null && !selectedFindingId.isEmpty()) {
-                        loadFindingForEdit(selectedFindingId);
-                    } else {
-                        mainStatusBanner.showError("Error", "Could not get finding ID");
-                    }
-                } else {
-                    mainStatusBanner.showError("Error", "Finding data not loaded");
+                Object idValue = updateFindingsModel.getValueAt(modelRow, FINDING_ID_COLUMN);
+                String selectedFindingId = idValue != null ? idValue.toString() : "";
+                if (selectedFindingId.isEmpty()) {
+                    mainStatusBanner.showError("Error", "Could not get finding ID - please refresh and try again");
+                    return;
                 }
+                loadFindingForEdit(selectedFindingId);
             }
         });
         listControlPanel.add(editButton);
@@ -438,13 +440,16 @@ public class FindingWorkflowWindow extends JFrame {
         JPanel listPanel = new JPanel(new BorderLayout(5, 5));
         listPanel.setBorder(BorderFactory.createTitledBorder("Select Finding to Delete"));
         
-        String[] columns = {"Title", "Category", "Type", "Severity"};
+        String[] columns = {"Title", "Category", "Type", "Severity", "ID"};
         DefaultTableModel findingsModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
         JTable findingsTable = new JTable(findingsModel);
         findingsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        findingsTable.getColumnModel().getColumn(FINDING_ID_COLUMN).setMinWidth(0);
+        findingsTable.getColumnModel().getColumn(FINDING_ID_COLUMN).setMaxWidth(0);
+        findingsTable.getColumnModel().getColumn(FINDING_ID_COLUMN).setPreferredWidth(0);
         
         JScrollPane scrollPane = new JScrollPane(findingsTable);
         scrollPane.setPreferredSize(new Dimension(600, 300));
@@ -478,22 +483,25 @@ public class FindingWorkflowWindow extends JFrame {
             int viewRow = findingsTable.getSelectedRow();
             if (viewRow >= 0) {
                 int modelRow = findingsTable.convertRowIndexToModel(viewRow);
-                if (loadedFindings != null && modelRow < loadedFindings.size()) {
-                    JsonObject finding = loadedFindings.get(modelRow).getAsJsonObject();
-                    String findingIdToDelete = getJsonString(finding, "_id");
-                    String title = getJsonString(finding, "title");
-                    
-                    int confirm = JOptionPane.showConfirmDialog(
-                        this,
-                        "Are you sure you want to delete:\n\n\"" + title + "\"\n\nThis action cannot be undone.",
-                        "Confirm Delete",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE
-                    );
-                    
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        deleteFinding(findingIdToDelete, findingsModel, findingsTable);
-                    }
+                Object idValue = findingsModel.getValueAt(modelRow, FINDING_ID_COLUMN);
+                String findingIdToDelete = idValue != null ? idValue.toString() : "";
+                String title = findingsModel.getValueAt(modelRow, 0) != null ? findingsModel.getValueAt(modelRow, 0).toString() : "";
+                
+                if (findingIdToDelete.isEmpty()) {
+                    mainStatusBanner.showError("Error", "Could not get finding ID - please refresh and try again");
+                    return;
+                }
+                
+                int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to delete:\n\n\"" + title + "\"\n\nThis action cannot be undone.",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    deleteFinding(findingIdToDelete, findingsModel, findingsTable);
                 }
             }
         });
@@ -656,11 +664,13 @@ public class FindingWorkflowWindow extends JFrame {
         for (JsonElement el : findings) {
             if (el.isJsonObject()) {
                 JsonObject finding = el.getAsJsonObject();
+                String findingId = getFindingId(finding);
                 model.addRow(new Object[]{
                     getJsonString(finding, "title"),
                     getJsonString(finding, "category"),
                     getJsonString(finding, "vulnType"),
-                    getJsonString(finding, "severity")
+                    getJsonString(finding, "severity"),
+                    findingId
                 });
             }
         }
@@ -1007,6 +1017,23 @@ public class FindingWorkflowWindow extends JFrame {
             return "";
         }
         return obj.get(key).getAsString();
+    }
+    
+    /**
+     * Returns the finding ID, handling variations in field naming.
+     * Older audits may use "id" or "findingId" instead of "_id".
+     */
+    private String getFindingId(JsonObject finding) {
+        if (finding == null) {
+            return "";
+        }
+        String id = getJsonString(finding, "_id");
+        if (!id.isEmpty()) return id;
+        
+        id = getJsonString(finding, "id");
+        if (!id.isEmpty()) return id;
+        
+        return getJsonString(finding, "findingId");
     }
     
     // Cache class for findings
