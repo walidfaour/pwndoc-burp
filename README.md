@@ -120,6 +120,7 @@ The easiest way to get started is using the pre-built JAR file.
 
 Download the latest `pwndoc-burp-1.0.2.jar` from the [Releases](https://github.com/walidfaour/pwndoc-burp/releases) page.
 
+
 ### Step 2: Install in Burp Suite
 
 1. Open **Burp Suite Professional** or **Community Edition**
@@ -182,7 +183,9 @@ gradlew.bat build
 
 :: 3. Find the JAR file
 dir build\libs\
+
 :: Look for: pwndoc-burp-1.0.2.jar
+
 ```
 
 #### Option B: Using PowerShell
@@ -197,7 +200,9 @@ cd pwndoc-burp
 
 # 3. Find the JAR file
 Get-ChildItem build\libs\
+
 # Look for: pwndoc-burp-1.0.2.jar
+
 ```
 
 #### Option C: Using Git Bash
@@ -212,10 +217,13 @@ cd pwndoc-burp
 
 # 3. Find the JAR file
 ls build/libs/
+
 # Look for: pwndoc-burp-1.0.2.jar
 ```
-
 **Output Location**: `build\libs\pwndoc-burp-1.0.2.jar`
+
+```
+
 
 ---
 
@@ -243,7 +251,10 @@ chmod +x gradlew
 
 # 6. Find the JAR file
 ls -la build/libs/
+odex/clarify-topic-details-ftnauh
 # Look for: pwndoc-burp-1.0.2.jar
+
+
 ```
 
 #### Fedora/RHEL/CentOS
@@ -268,6 +279,8 @@ chmod +x gradlew
 # 6. Find the JAR file
 ls -la build/libs/
 # Look for: pwndoc-burp-1.0.2.jar
+
+
 ```
 
 #### Arch Linux
