@@ -118,7 +118,7 @@ The easiest way to get started is using the pre-built JAR file.
 
 ### Step 1: Download the Extension
 
-Download the latest `pwndoc-burp-1.0.0.jar` from the [Releases](https://github.com/walidfaour/pwndoc-burp/releases) page.
+Download the latest `pwndoc-burp-1.0.1.jar` from the [Releases](https://github.com/walidfaour/pwndoc-burp/releases) page.
 
 ### Step 2: Install in Burp Suite
 
@@ -126,7 +126,7 @@ Download the latest `pwndoc-burp-1.0.0.jar` from the [Releases](https://github.c
 2. Navigate to **Extensions** → **Installed**
 3. Click **Add**
 4. Set **Extension type** to `Java`
-5. Click **Select file** and choose the downloaded `pwndoc-burp-1.0.0.jar`
+5. Click **Select file** and choose the downloaded `pwndoc-burp-1.0.1.jar`
 6. Click **Next**
 
 ### Step 3: Configure the Extension
@@ -182,7 +182,7 @@ gradlew.bat build
 
 :: 3. Find the JAR file
 dir build\libs\
-:: Look for: pwndoc-burp-1.0.0.jar
+:: Look for: pwndoc-burp-1.0.1.jar
 ```
 
 #### Option B: Using PowerShell
@@ -197,7 +197,7 @@ cd pwndoc-burp
 
 # 3. Find the JAR file
 Get-ChildItem build\libs\
-# Look for: pwndoc-burp-1.0.0.jar
+# Look for: pwndoc-burp-1.0.1.jar
 ```
 
 #### Option C: Using Git Bash
@@ -212,10 +212,10 @@ cd pwndoc-burp
 
 # 3. Find the JAR file
 ls build/libs/
-# Look for: pwndoc-burp-1.0.0.jar
+# Look for: pwndoc-burp-1.0.1.jar
 ```
 
-**Output Location**: `build\libs\pwndoc-burp-1.0.0.jar`
+**Output Location**: `build\libs\pwndoc-burp-1.0.1.jar`
 
 ---
 
@@ -243,7 +243,7 @@ chmod +x gradlew
 
 # 6. Find the JAR file
 ls -la build/libs/
-# Look for: pwndoc-burp-1.0.0.jar
+# Look for: pwndoc-burp-1.0.1.jar
 ```
 
 #### Fedora/RHEL/CentOS
@@ -267,7 +267,7 @@ chmod +x gradlew
 
 # 6. Find the JAR file
 ls -la build/libs/
-# Look for: pwndoc-burp-1.0.0.jar
+# Look for: pwndoc-burp-1.0.1.jar
 ```
 
 #### Arch Linux
@@ -286,7 +286,7 @@ chmod +x gradlew
 ./gradlew build
 ```
 
-**Output Location**: `build/libs/pwndoc-burp-1.0.0.jar`
+**Output Location**: `build/libs/pwndoc-burp-1.0.1.jar`
 
 ---
 
@@ -316,7 +316,7 @@ chmod +x gradlew
 
 # 7. Find the JAR file
 ls -la build/libs/
-# Look for: pwndoc-burp-1.0.0.jar
+# Look for: pwndoc-burp-1.0.1.jar
 ```
 
 #### Using SDKMAN (Alternative)
@@ -336,7 +336,7 @@ chmod +x gradlew
 ./gradlew build
 ```
 
-**Output Location**: `build/libs/pwndoc-burp-1.0.0.jar`
+**Output Location**: `build/libs/pwndoc-burp-1.0.1.jar`
 
 ---
 

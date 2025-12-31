@@ -15,6 +15,8 @@ import com.walidfaour.pwndoc.api.ApiResult;
 import com.walidfaour.pwndoc.api.PwnDocApiClient;
 import com.walidfaour.pwndoc.api.PwnDocApiClient.*;
 import com.walidfaour.pwndoc.config.ConfigManager;
+import com.walidfaour.pwndoc.context.AuthenticationDialog;
+import com.walidfaour.pwndoc.context.FindingWorkflowWindow;
 import com.walidfaour.pwndoc.ui.components.SectionHeader;
 import com.walidfaour.pwndoc.ui.components.StatusBanner;
 import com.walidfaour.pwndoc.util.TokenManager;
@@ -53,6 +55,9 @@ public class AuditsPanel {
     private JButton clearDefaultButton; // ISSUE #5: Button to clear default audit
     private JButton deleteAuditButton;
     private JButton sendForApprovalButton;
+    private JButton createFindingButton;
+    private JButton updateFindingButton;
+    private JButton deleteFindingButton;
     private JButton refreshButton;
     private StatusBanner auditStatusBanner;
     
@@ -241,6 +246,22 @@ public class AuditsPanel {
         sendForApprovalButton.setEnabled(false);
         sendForApprovalButton.addActionListener(e -> sendSelectedForApproval());
         buttonPanel.add(sendForApprovalButton);
+
+        // Finding workflow shortcuts
+        createFindingButton = new JButton("Create Finding");
+        createFindingButton.setToolTipText("Open the finding editor using the default audit");
+        createFindingButton.addActionListener(e -> handleFindingAction("create"));
+        buttonPanel.add(createFindingButton);
+
+        updateFindingButton = new JButton("Update Finding");
+        updateFindingButton.setToolTipText("Update an existing finding for the default audit");
+        updateFindingButton.addActionListener(e -> handleFindingAction("update"));
+        buttonPanel.add(updateFindingButton);
+
+        deleteFindingButton = new JButton("Delete Finding");
+        deleteFindingButton.setToolTipText("Delete a finding from the default audit");
+        deleteFindingButton.addActionListener(e -> handleFindingAction("delete"));
+        buttonPanel.add(deleteFindingButton);
         
         section.add(buttonPanel);
         
@@ -276,8 +297,7 @@ public class AuditsPanel {
         if (selectedRow >= 0) {
             Audit audit = tableModel.getAuditAt(selectedRow);
             if (audit != null) {
-                configManager.setDefaultAuditId(audit.id);
-                configManager.setDefaultAuditName(audit.name);
+                configManager.setDefaultAudit(audit.id, audit.name, audit.auditType);
                 updateDefaultAuditLabel();
                 tableModel.fireTableDataChanged();
                 auditStatusBanner.showSuccess("Default audit set to: " + audit.name);
@@ -296,8 +316,7 @@ public class AuditsPanel {
             return;
         }
         
-        configManager.setDefaultAuditId("");
-        configManager.setDefaultAuditName("");
+        configManager.setDefaultAudit("", "", "");
         updateDefaultAuditLabel();
         tableModel.fireTableDataChanged();
         auditStatusBanner.showSuccess("Default audit cleared");
@@ -337,8 +356,7 @@ public class AuditsPanel {
                     if (result.isSuccess()) {
                         // Clear default if we deleted it
                         if (audit.id.equals(configManager.getDefaultAuditId())) {
-                            configManager.setDefaultAuditId("");
-                            configManager.setDefaultAuditName("");
+                            configManager.setDefaultAudit("", "", "");
                             updateDefaultAuditLabel();
                         }
                         auditStatusBanner.showSuccess("Audit deleted successfully");
@@ -401,6 +419,40 @@ public class AuditsPanel {
             }
         };
         worker.execute();
+    }
+
+    // ============ Findings Shortcuts ============
+
+    private void handleFindingAction(String mode) {
+        logging.logToOutput("Audits tab: " + mode + " finding clicked");
+        
+        Runnable launchWorkflow = () -> SwingUtilities.invokeLater(() -> {
+            boolean needsAuditSelection = isDefaultAuditMissing();
+            FindingWorkflowWindow window = new FindingWorkflowWindow(
+                api, configManager, apiClient, tokenManager, logging,
+                mode, null, null, needsAuditSelection
+            );
+            window.setVisible(true);
+        });
+        
+        if (!tokenManager.hasValidToken()) {
+            AuthenticationDialog dialog = new AuthenticationDialog(
+                api, configManager, apiClient, tokenManager, logging,
+                () -> {
+                    onAuthenticationSuccess();
+                    launchWorkflow.run();
+                }
+            );
+            dialog.setVisible(true);
+            return;
+        }
+        
+        launchWorkflow.run();
+    }
+
+    private boolean isDefaultAuditMissing() {
+        String defaultAuditId = configManager.getDefaultAuditId();
+        return defaultAuditId == null || defaultAuditId.isEmpty();
     }
     
     // ============ Create Audit Section ============
