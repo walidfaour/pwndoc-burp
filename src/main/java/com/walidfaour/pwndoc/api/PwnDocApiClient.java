@@ -710,10 +710,28 @@ public class PwnDocApiClient {
         
         if (result.isSuccess()) {
             JsonObject response = result.getData();
-            if (response.has("datas") && response.get("datas").isJsonObject()) {
-                return ApiResult.success(response.getAsJsonObject("datas"));
+            
+            // Preferred: datas as object
+            if (response.has("datas")) {
+                var datas = response.get("datas");
+                if (datas.isJsonObject()) {
+                    return ApiResult.success(datas.getAsJsonObject());
+                }
+                // Handle legacy responses where datas is an array
+                if (datas.isJsonArray() && datas.getAsJsonArray().size() > 0 && datas.getAsJsonArray().get(0).isJsonObject()) {
+                    return ApiResult.success(datas.getAsJsonArray().get(0).getAsJsonObject());
+                }
             }
-            return ApiResult.failure("Invalid response format");
+            
+            // Handle top-level array fallback (wrapped in executeRequest)
+            if (response.has("array") && response.get("array").isJsonArray()) {
+                var arr = response.getAsJsonArray("array");
+                if (arr.size() > 0 && arr.get(0).isJsonObject()) {
+                    return ApiResult.success(arr.get(0).getAsJsonObject());
+                }
+            }
+            
+            return ApiResult.failure("Invalid response format (finding)");
         }
         
         return ApiResult.failure(result.getError());
@@ -882,8 +900,18 @@ public class PwnDocApiClient {
             
             if (responseCode >= 200 && responseCode < 300) {
                 try {
-                    JsonObject json = JsonParser.parseString(responseBody).getAsJsonObject();
-                    return ApiResult.success(json);
+                    var element = JsonParser.parseString(responseBody);
+                    
+                    // Accept both object and array responses for compatibility
+                    if (element.isJsonObject()) {
+                        return ApiResult.success(element.getAsJsonObject());
+                    } else if (element.isJsonArray()) {
+                        JsonObject wrapper = new JsonObject();
+                        wrapper.add("array", element.getAsJsonArray());
+                        return ApiResult.success(wrapper);
+                    } else {
+                        return ApiResult.failure("Invalid JSON response: unexpected root type");
+                    }
                 } catch (Exception e) {
                     return ApiResult.failure("Invalid JSON response");
                 }
